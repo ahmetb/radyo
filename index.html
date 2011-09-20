@@ -10,32 +10,31 @@
 			font-family: 'Lucida Grande', 'Helvetica Neue', Arial, sans;
 		}
 		
+		p { margin: 0; margin-bottom: .5em; padding:0;}
+		
 		input {font-size: 80%;}
 		
-		div#info {
-			background-color: #eeeeee;
-		}
-	
 		div.resultContainer div.result {
 			text-decoration: underline;
 			clear:both;
 		}
 	
 		div.resultContainer div.result:hover {
-			background-color : gray;
+			background-color : #eee;
 		}
 		
 		small {font-size: 11px;}
 		
-		img#albumCover { position:absolute; right: 10px; top:40px; }
+		img#albumCover { position:absolute; right: 10px; top:40px; width:200px; height:200px;}
 		
+		a.github { background-image: url(https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67); background-position: 0 0; background-repeat: no-repeat; display: block; width: 150px; height: 150px; overflow: hidden; position: absolute; text-indent: -9999px; right: 0; top: -20px; }
 	</style>
 </head>
 <body onUnload="exit()">
 	<script type='text/javascript'>
 	var lastFmApiKey = "6a040e6842f5c100c5a9816c4e28cdaf";
 	var maxSearchResults = 6;
-	var videoLoadingDelayTolerance = 3;
+	var videoLoadingDelayTolerance = 4;
 	
 	var playerWindow;
 	var searchResults, suggestionResults;
@@ -238,7 +237,11 @@
 		
 		// cancel previous timer, start new.
 		if (timer) clearInterval(timer);
-		timer = setInterval(timerFunction, 1000); // run every second
+		
+		setTimeout(function(){
+			timer = setInterval(timerFunction, 1000); // run every second			
+		}, 2*1000);
+
 	
 		launchPlayer(videoLink);
 	}
@@ -284,10 +287,12 @@
 	<div id='searchResults' display='none' class='resultContainer'>
 	</div>
 	<div style='display:none' id='info'>
-		Now playing: <span id='nowPlaying'></span>
+		Now: <span id='nowPlaying'></span>
 		(<span id='time'></span>)
+		<p>
 		<input type='button' id='btnStop' onclick='exit();' value='Stop'>
 		<input type='button' id='btnNext' onclick='playNext();' value='Skip&raquo;'>
+		</p>
 		<img src='' style='float:right;' id='albumCover'/>
 		
 		<div id='suggestions' style='display:none;' class='resultContainer'>
@@ -296,6 +301,6 @@
 			</div>
 		</div>
 	</div>
-	<small><a href='https://github.com/ahmetalpbalkan/radyo'>[source code]</a>, licensed under GPL.
+	<a class='github' href='http://github.com/ahmetalpbalkan/radyo'>Fork me on GitHub</a>
 </body>
 </html>
