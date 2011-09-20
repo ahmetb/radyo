@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<head>
+	<title>radyo</title>
+	<meta charset="utf-8">
+	<script src="jquery-1.5.2.min.js" type="text/javascript" charset="utf-8"></script>
+	
+	<style>
+		html {
+			font-size: 200%;
+		}
+		
+		input {font-size: 100%;}
+		
+		div#info {
+			background-color: #eeeeee;
+		}
+	
+		div.resultContainer div.result {
+			text-decoration: underline;
+			clear:both;
+		}
+	
+		div.resultContainer div.result:hover {
+			background-color : gray;
+		}
+		
+		img#albumCover { position:absolute; right: 10px; top:40px; }
+	</style>
+</head>
+<body onUnload="exit()">
+	<script type='text/javascript'>
+	var lastFmApiKey = "6a040e6842f5c100c5a9816c4e28cdaf";
+	var maxSearchResults = 6;
+	var videoLoadingDelayTolerance = 3;
+	
+	var playerWindow;
+	var searchResults, suggestionResults;
+	var playedSoFar = new Array();
+	
+	var curDuration, curElapsed;
+	var timer;
+	
+	function timerFunction(){
+		if(curElapsed <= curDuration) $('#time').html(strSecs(curElapsed) + '/' + strSecs(curDuration));
+		if (curElapsed > curDuration + videoLoadingDelayTolerance){
+			console.log("Play next");
+			if (timer) {
+				clearInterval(timer);
+			}
+			playNext();
+		} else {
+			curElapsed += 1;
+		}
+	}
+	
+	function strSecs(secs){
+		return Math.floor(secs/60)+':'+secs%60;
+	}
+	
+	function playNext(){
+		if (playerWindow) playerWindow.close(); 
+		
+		if (suggestionResults){
+			nextTrack = suggestionResults.shift();
+			if (nextTrack){
+				console.log('Playing next track:' + nextTrack.name +' by '+ nextTrack.artist);
+				startPlaying(nextTrack);
+			}
+		} else {
+			console.log('No suggestions to play next.');
+		}
+	}
+
+	function doSearch(q){
+		$('#searchResults').html('');
+		
+		url = 'http://ws.audioscrobbler.com/2.0/?method=track.search&track='+encodeURIComponent(q)+'&api_key='+ lastFmApiKey;
+		
+		$.get(url, function(xml){
+			preSearchCleanup();
+			
+			$('track', xml).each(function(i){
+				var images = new Array();
+				
+				$(this).find("image").each(function(img){
+					images.push($(this).text());
+				});
+				
+				searchResults.push({
+					name: $(this).find("name").text(),
+					artist: $(this).find("artist").text(),
+					images: images
+				});
+			});
+			
+			postSearchHook();
+		});
+	}
+	
+	function preSearchCleanup(){
+		$('#searchResults').html('');
+		searchResults = new Array();
+		$('#searchResults').slideDown();
+	}
+	
+	function postSearchHook(){
+		searchResults = searchResults.slice(0, maxSearchResults);
+		
+		if (searchResults.length == 0){
+			$('#searchResults').html('No results found.');
+		} else {
+			searchResults.map(function(result){
+				$('<img />', {
+					src: result.images[0], // small
+					width: 34,
+					height: 34,
+					class: 'albumart'					
+				}).prependTo(
+					$('<div />', {
+						class: 'result',
+						text: result.artist + ' - ' + result.name,
+						click: function(){startPlaying(result); 		$('#searchResults').slideUp();}
+					}).appendTo('#searchResults')
+				);
+				
+			});
+		}
+	}
+	
+	function suggestTracks(artist, title){
+		url= 'http://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist='+ artist +'&track='+ title +'&autocorrect=1&limit=10&api_key='+ lastFmApiKey
+		
+		$.get(url, function(xml){
+			preSuggestionCleanup();
+			
+			$('track', xml).each(function(i){
+				
+				var _images = new Array();
+				
+				$(this).find("image").each(function(img){
+					_images.push($(this).text());
+				});
+				
+				suggestionResults.push({
+					name: $(this).find("name").first().text(),
+					artist: $(this).find("artist").find("name").text(),
+					images: _images
+				});
+			});
+			
+			postSuggestionHook();
+		});
+	}
+	
+	function preSuggestionCleanup(){
+		$('#suggestionResults').html('');
+		suggestionResults = new Array();
+	}
+	
+	function postSuggestionHook(){
+		$('#suggestions').slideDown();
+		
+		filteredResults = new Array();
+		suggestionResults.map(function(track){
+			if (playedSoFar.indexOf(track.name) == -1){
+				filteredResults.push(track);
+			}
+		});
+
+		suggestionResults = filteredResults;
+		
+		if(suggestionResults.length < 1) $('#btnNext').attr('disabled', 'disabled');
+		else $('#btnNext').removeAttr('disabled');
+
+		renderedResults = suggestionResults.slice(0, 5);
+
+		renderSuggestionResults(renderedResults);
+	}
+	
+	function renderSuggestionResults(results){
+		if (results.length == 0){
+			$('#suggestionResults').html('No suggestions found.');
+		} else {
+			results.map(function(result){
+				$('<img />', {
+					src: result.images[1], // small
+					width: 50,
+					height: 50,
+					class: 'albumart'					
+				}).prependTo(
+					$('<div />', {
+						class: 'result',
+						text: result.artist + ' - ' + result.name,
+						click: function(){startPlaying(result);}
+					}).appendTo('#suggestionResults')
+				);
+			});
+		}
+	}
+	
+	function startPlaying(result){
+		if (result.images){
+			_biggestImg = result.images.pop();
+			if (_biggestImg) $('#albumCover').attr('src', _biggestImg); 
+		}
+		startPlayingFromYoutube(result.artist, result.name);
+	}
+		
+	function startPlayingFromYoutube(artist, title){		
+		preStartPlayingHook();
+		
+		playedSoFar.push(title);
+		
+		var q = encodeURIComponent(artist + ' '+ title);
+		var url = 'https://gdata.youtube.com/feeds/api/videos?max-results=1&q='+q+'&callback=youtubeCallback';
+		$.get(url); // handled by youtubeCallback
+		
+		// show info and now playing info.
+		$('#nowPlaying').html(artist+' - '+title);
+		$('#info').show();
+		
+		suggestTracks(artist,title);
+	}
+	
+	function youtubeCallback(xml){
+		xml = jQuery.parseXML(xml);
+		
+		var video = $('entry', xml).first();
+		if (!video) return;
+		
+		var videoLink = $(video).find('link').attr('href');
+		curDuration = parseInt($(video).find('duration').attr('seconds'));
+		curElapsed = 0;
+		
+		// cancel previous timer, start new.
+		if (timer) clearInterval(timer);
+		timer = setInterval(timerFunction, 1000); // run every second
+	
+		launchPlayer(videoLink);
+	}
+
+	function preStartPlayingHook(){
+		$('#player').attr('src', '');
+		$('#btnStop').removeAttr('disabled');
+	}
+	
+	function launchPlayer(link){
+		console.log('Playing video requested for ' + link)
+		
+		if(playerWindow){
+			console.log("Player was open, closing.");
+			playerWindow.close();	
+		} 
+		playerWindow = window.open(link, "player", "resizable=no,scrollbars=no,status=no,width=0,height=0,screenX=999");
+	}
+	
+	
+	function exit(){
+		if (playerWindow) playerWindow.close();
+		if (timer) clearInterval(timer);
+		$('#btnStop').attr('disabled','true');
+		$('#info').slideUp();
+		return true;
+	}
+	
+	// on document ready
+	$(function(){
+		$('#frmSearch').submit(function(){
+			doSearch($('#q').val());
+			return false;
+		});
+		
+		$('#q').val('nadas'); $('#frmSearch').submit();
+	})
+	</script>
+	
+	<form id='frmSearch'>
+		<input type='text' name='q' id='q' />
+		<input type='submit' value='Search' />
+	</form>
+	
+	<div id='searchResults' display='none' class='resultContainer'>
+	</div>
+	<div style='display:none' id='info'>
+		Now playing: <span id='nowPlaying'></span>
+		(<span id='time'></span>)
+		<input type='button' id='btnStop' onclick='exit();' value='Stop'>
+		<input type='button' id='btnNext' onclick='playNext();' value='Skip&raquo;'>
+		<img src='' style='float:right;' id='albumCover'/>
+		
+		<div id='suggestions' style='display:none;' class='resultContainer'>
+			Suggestions to play next in radio:
+			<div id='suggestionResults'>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
