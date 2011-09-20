@@ -41,7 +41,7 @@
 	var playedSoFar = new Array();
 	
 	var curDuration, curElapsed;
-	var timer;
+	//var timer;
 	
 	function timerFunction(){
 		if(curElapsed <= curDuration) $('#time').html(strSecs(curElapsed) + '/' + strSecs(curDuration));
@@ -238,7 +238,7 @@
 		curElapsed = 0;
 		
 		// cancel previous timer, start new.
-		if (timer) clearInterval(timer);
+		//if (timer) clearInterval(timer);
 		
 		/*setTimeout(function(){
 			timer = setInterval(timerFunction, 1000); // run every second			
@@ -265,7 +265,7 @@
 	}
 	
 	function exit(){
-		if (timer) clearInterval(timer);
+		//if (timer) clearInterval(timer);
 		$('#btnStop').attr('disabled','true');
 		$('#info').slideUp();
 		return true;
