@@ -20,7 +20,8 @@
 		a { text-decoration: none; color: inherit;}
 		a:hover {text-decoration: underline;}
 		
-		input { font-size: 16px; }
+		#q { font-size: 16px; width: 300px; color:#555;}
+		
 		
 		div.resultContainer {
 			width: 700px;
@@ -45,9 +46,9 @@
 		img.albumArt {float:left;}
 		img#albumCover { position:absolute; right: 10px; top:40px;  z-index: -999;}
 		
-		div#search { border-bottom: 1px dotted gray; margin-bottom: 1em;}
+		div#search {  margin-bottom: 1em; width: 500px;}
 		
-		div#description { font-size: 15px; margin-bottom: 1em;}
+		div#description { font-size: 15px; margin-bottom: 1em; color: #666;}
 		
 		a.github { background-image: url(https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67); background-position: 0 0; background-repeat: no-repeat; display: block; width: 150px; height: 150px; overflow: hidden; position: absolute; text-indent: -9999px; right: 0; top: 0px; }
 		
@@ -62,6 +63,8 @@
 	
 	var searchResults, suggestionResults;
 	var playedSoFar = new Array();
+	
+	var searchTimeout;
 	
 	var curDuration, curElapsed;
 	//var timer;
@@ -336,6 +339,13 @@
 			playNext();
 	}
 	
+	
+	function onYouTubePlayerReady(){
+		var o = document.getElementById('ytplayer_object');
+		o.addEventListener("onStateChange", "ytPlayerState" );
+		o.addEventListener("onError", "playNext" );
+	}
+	
 	// on document ready
 	$(function(){
 		$('#frmSearch').submit(function(){
@@ -343,6 +353,28 @@
 			return false;
 		});
 		
+		$('#q').keyup(function(){
+			$('#searchLoading').show();
+			if (searchTimeout) clearTimeout(searchTimeout);
+			
+			searchTimeout = setTimeout(function(){
+				if ($('#q').val())
+					doSearch($('#q').val());
+				else 
+					$('#searchLoading').hide();
+			}, 500);
+		});
+		
+		$('#q').focus(function(){
+			if ($(this).val()=='Type an artist or song name')
+				$(this).val('');
+		})
+		
+		$('#q').blur(function(){
+			if (!$(this).val()) $(this).val('Type an artist or song name');
+		})
+		
+		// init youtube flash player
 		swfobject.embedSWF(
 	      'http://www.youtube.com/v/dky2abEIeps&enablejsapi=1&rel=0&fs=1&autoplay=1',
 	      'ytplayer_div',
@@ -363,27 +395,20 @@
 		//$('#q').val('let it be'); $('#frmSearch').submit();
 	});
 
-	
-	function onYouTubePlayerReady(){
-		var o = document.getElementById('ytplayer_object');
-		o.addEventListener("onStateChange", "ytPlayerState" );
-		o.addEventListener("onError", "playNext" );
-	}
+	</script>
 
-</script>
 	<div id='description'>
-		Radyo plays similar tracks one after another using last.fm and YouTube. Begin by searching a well-known song.
+		Radyo plays similar tracks one after another using last.fm and YouTube. Begin by searching a well-known song
+		and enjoy!
 	</div>
 	
 	<div id='search'>
 		<form id='frmSearch'>
-			<input type='text' name='q' id='q' />
-			<input type='submit' value='Search' />
+			<input type='text' name='q' id='q' value='Type an artist or song name'/>
+			<img id='searchLoading' style='display:none' src='ajax.gif'/>
 		</form>
 		
-		<div id='searchLoading' style='display:none'><img src='ajax.gif'/></div>
 		<div id='searchResults' display='none' class='resultContainer'>
-			
 		</div>
 	</div>
 	
@@ -408,6 +433,6 @@
 			</div>
 		</div>
 	</div>
-	<a class='github' href='http://github.com/ahmetalpbalkan/radyo'>Fork me on GitHub</a>
+	<a class='github' target='_blank' href='http://github.com/ahmetalpbalkan/radyo'>Fork me on GitHub</a>
 </body>
 </html>
