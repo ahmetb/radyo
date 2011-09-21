@@ -2,39 +2,62 @@
 <head>
 	<title>radyo</title>
 	<meta charset="utf-8">
-	<script src="jquery-1.5.2.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js" type="text/javascript"></script>
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/swfobject/2/swfobject.js"></script>
 	
 	<style>
 		html {
-			font-size: 150%;
+			font-size: 22px;
 			font-family: 'Lucida Grande', 'Helvetica Neue', Arial, sans;
 		}
 		
-		p { margin: 0; margin-bottom: .5em; padding:0;}
+		p { 
+			margin: 0;
+			margin-bottom: .5em;
+			padding:0;
+		}
 		
-		input {font-size: 80%;}
+		a { text-decoration: none; color: inherit;}
+		a:hover {text-decoration: underline;}
+		
+		input { font-size: 16px; }
+		
+		div.resultContainer {
+			width: 700px;
+		}
 		
 		div.resultContainer div.result {
-			text-decoration: underline;
 			clear:both;
+			font-size: 17px;
 		}
-	
-		div.resultContainer div.result:hover {
-			background-color : #eee;
-		}
+
+		div#suggestionResults .result { width:450px; }
+		
+		div#suggestions div.heading {border-bottom: 1px dotted gray; margin-bottom: .5em;}
+		div#suggestionResults .result .meta { color: #000066;  }
+		div#suggestionResults .result .track { font-size: 17px;  }
+		div#suggestionResults .result .artist { font-size: 12px; }
+		div#suggestionResults .result .actions { font-size: 15px; margin-top:5px; color: #692200;}
+		div#suggestionResults img { float:left; margin: 3px; }
 		
 		small {font-size: 11px;}
 		
+		img.albumArt {float:left;}
 		img#albumCover { position:absolute; right: 10px; top:40px;  z-index: -999;}
 		
-		a.github { background-image: url(https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67); background-position: 0 0; background-repeat: no-repeat; display: block; width: 150px; height: 150px; overflow: hidden; position: absolute; text-indent: -9999px; right: 0; top: -20px; }
+		div#search { border-bottom: 1px dotted gray; margin-bottom: 1em;}
+		
+		div#description { font-size: 15px; margin-bottom: 1em;}
+		
+		a.github { background-image: url(https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67); background-position: 0 0; background-repeat: no-repeat; display: block; width: 150px; height: 150px; overflow: hidden; position: absolute; text-indent: -9999px; right: 0; top: 0px; }
+		
 	</style>
 </head>
-<body onUnload="exit()">
+<body>
 	<script type='text/javascript'>
 	var lastFmApiKey = "6a040e6842f5c100c5a9816c4e28cdaf";
-	var maxSearchResults = 6;
+	var maxSearchResults = 5;
+	var maxSuggestionResults = 3;
 	var videoLoadingDelayTolerance = 4;
 	
 	var searchResults, suggestionResults;
@@ -46,7 +69,6 @@
 	function timerFunction(){
 		if(curElapsed <= curDuration) $('#time').html(strSecs(curElapsed) + '/' + strSecs(curDuration));
 		if (curElapsed > curDuration + videoLoadingDelayTolerance){
-			console.log("Play next");
 			if (timer) {
 				clearInterval(timer);
 			}
@@ -64,21 +86,19 @@
 		if (suggestionResults){
 			nextTrack = suggestionResults.shift();
 			if (nextTrack){
-				console.log('Playing next track:' + nextTrack.name +' by '+ nextTrack.artist);
 				startPlaying(nextTrack);
 			}
-		} else {
-			console.log('No suggestions to play next.');
 		}
 	}
 
 	function doSearch(q){
 		$('#searchResults').html('');
+		preSearchHook();
 		
 		url = 'http://ws.audioscrobbler.com/2.0/?method=track.search&track='+encodeURIComponent(q)+'&api_key='+ lastFmApiKey;
 		
 		$.get(url, function(xml){
-			preSearchCleanup();
+			
 			
 			$('track', xml).each(function(i){
 				var images = new Array();
@@ -98,42 +118,55 @@
 		});
 	}
 	
-	function preSearchCleanup(){
+	function preSearchHook(){
+		$('#searchLoading').show();
 		$('#searchResults').html('');
 		searchResults = new Array();
 		$('#searchResults').slideDown();
 	}
 	
 	function postSearchHook(){
+		$('#searchLoading').hide();
 		searchResults = searchResults.slice(0, maxSearchResults);
 		
 		if (searchResults.length == 0){
 			$('#searchResults').html('No results found.');
 		} else {
 			searchResults.map(function(result){
+				main = $('<div />', {
+					class: 'result',
+					click: function() {
+							startPlaying(result); 	
+							$('#searchResults').slideUp();
+							return false;
+						}
+				}).appendTo('#searchResults')
+				
+				anchor = $('<a />', {
+					src: result.images[0], // small
+					text: result.artist + ' - ' + result.name,
+					href: '/'
+				}).appendTo(main);
+				
 				$('<img />', {
 					src: result.images[0], // small
-					width: 34,
-					height: 34,
+					width: 30,
+					height: 30,
 					class: 'albumart'					
-				}).prependTo(
-					$('<div />', {
-						class: 'result',
-						text: result.artist + ' - ' + result.name,
-						click: function(){startPlaying(result); 		$('#searchResults').slideUp();}
-					}).appendTo('#searchResults')
-				);
+				}).prependTo(anchor);
 				
 			});
+			
+			$('#searchResults').slideDown();
 		}
 	}
 	
 	function suggestTracks(artist, title){
-		url= 'http://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist='+ artist +'&track='+ title +'&autocorrect=1&limit=10&api_key='+ lastFmApiKey
+		url= 'http://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist='+ artist +'&track='+ title +'&autocorrect=1&api_key='+ lastFmApiKey
+
+		preSuggestionHook();		
 		
 		$.get(url, function(xml){
-			preSuggestionCleanup();
-			
 			$('track', xml).each(function(i){
 				
 				var _images = new Array();
@@ -153,12 +186,14 @@
 		});
 	}
 	
-	function preSuggestionCleanup(){
+	function preSuggestionHook(){
 		$('#suggestionResults').html('');
 		suggestionResults = new Array();
+		$('#suggestionLoading').show();
 	}
 	
 	function postSuggestionHook(){
+		$('#suggestionLoading').hide();
 		$('#suggestions').slideDown();
 		
 		filteredResults = new Array();
@@ -172,29 +207,68 @@
 		
 		if(suggestionResults.length < 1) $('#btnNext').attr('disabled', 'disabled');
 		else $('#btnNext').removeAttr('disabled');
-
-		renderedResults = suggestionResults.slice(0, 5);
-
-		renderSuggestionResults(renderedResults);
+		
+		renderSuggestionResults(suggestionResults);
 	}
 	
 	function renderSuggestionResults(results){
+		results = results.slice(0, maxSuggestionResults);
+		
+		$('#suggestionResults').empty();
+		
 		if (results.length == 0){
-			$('#suggestionResults').html('No suggestions found.');
+			$('#suggestionResults').html('No suggestions to play next. Please search for more famous tracks.');
 		} else {
 			results.map(function(result){
+				main = $('<div />', {
+					class: 'result'
+				}).appendTo('#suggestionResults');
+				
+				meta = $('<a />', {
+					class: 'meta',
+					href: '',
+					click: function(){
+						$('#suggestions').slideUp(
+							function(){
+								startPlaying(result);
+								return false;
+							});
+					}
+				}).appendTo(main);
+				
+				$('<div />', {
+					class: 'title',
+					text: result.name
+				}).appendTo(meta);
+				
+				$('<div />', {
+					class: 'artist',
+					text: result.artist
+				}).appendTo(meta);
+				
+				$('<a />', {
+					class: 'actions',
+					text: "✖ Skip",
+					click: function(){
+						$(this).parent().remove();
+						if (suggestionResults){
+							var tmp = suggestionResults.shift();
+							//suggestionResults.push(tmp);
+							renderSuggestionResults(suggestionResults);
+						}
+					}
+				}).appendTo(main);
+				
 				$('<img />', {
-					src: result.images[1], // small
-					width: 50,
-					height: 50,
+					src: result.images[1], // med
+					width: 64,
+					height: 64,
 					class: 'albumart'					
 				}).prependTo(
-					$('<div />', {
-						class: 'result',
-						text: result.artist + ' - ' + result.name,
-						click: function(){startPlaying(result);}
-					}).appendTo('#suggestionResults')
+					meta
 				);
+				
+				$('#suggestionResults .actions').hide().first().show();
 			});
 		}
 	}
@@ -231,7 +305,7 @@
 		
 		var videoLink = $(video).find('link').attr('href');
 		var id = $(video).find('id').text();
-		console.log(id);
+		
 		id = id.substring(id.indexOf('videos/')+'videos/'.length);
 		
 		curDuration = parseInt($(video).find('duration').attr('seconds'));
@@ -253,8 +327,6 @@
 	}
 	
 	function launchPlayer(id){
-		console.log('Playing video requested id ' + id)
-		
 		var o = document.getElementById('ytplayer_object');
 		if( o ) o.loadVideoById(id);
 	}
@@ -262,13 +334,6 @@
 	function ytPlayerState(newState){
 		if (newState <= 0)
 			playNext();
-	}
-	
-	function exit(){
-		//if (timer) clearInterval(timer);
-		$('#btnStop').attr('disabled','true');
-		$('#info').slideUp();
-		return true;
 	}
 	
 	// on document ready
@@ -281,8 +346,8 @@
 		swfobject.embedSWF(
 	      'http://www.youtube.com/v/dky2abEIeps&enablejsapi=1&rel=0&fs=1&autoplay=1',
 	      'ytplayer_div',
-	      '425',
-	      '344',
+	      '276',
+	      '223',
 	      '8',
 	      null,
 	      null,
@@ -294,40 +359,51 @@
 	        id: 'ytplayer_object'
 	      }
 	    );
+	
+		//$('#q').val('let it be'); $('#frmSearch').submit();
 	});
 
 	
 	function onYouTubePlayerReady(){
-		console.log('Youtube player ready.');
 		var o = document.getElementById('ytplayer_object');
 		o.addEventListener("onStateChange", "ytPlayerState" );
 		o.addEventListener("onError", "playNext" );
 	}
 
 </script>
-
-	
-	<form id='frmSearch'>
-		<input type='text' name='q' id='q' />
-		<input type='submit' value='Search' />
-	</form>
-	
-	<div id='searchResults' display='none' class='resultContainer'>
+	<div id='description'>
+		Radyo plays similar tracks one after another using last.fm and YouTube. Begin by searching a well-known song.
 	</div>
-	<div id='ytplayer_div'></div>
+	
+	<div id='search'>
+		<form id='frmSearch'>
+			<input type='text' name='q' id='q' />
+			<input type='submit' value='Search' />
+		</form>
+		
+		<div id='searchLoading' style='display:none'><img src='ajax.gif'/></div>
+		<div id='searchResults' display='none' class='resultContainer'>
+			
+		</div>
+	</div>
+	
+	<div id='player'><div id='ytplayer_div'></div></div>
 	<div style='display:none' id='info'>
 		<span style='display:none;'>
 		Now: <span id='nowPlaying'></span>
 		(<span id='time'></span>)
 		</span>
-		<p>
-		<input type='button' id='btnStop' onclick='exit();' value='Stop'>
-		<input type='button' id='btnNext' onclick='playNext();' value='Skip&raquo;'>
+		
+		<p style='display:none;'>
+			<input type='button' id='btnNext' onclick='playNext();' value='Play Next &raquo;'>
 		</p>
+		
 		<img src='' style='float:right;' id='albumCover'/>
 		
+		
+		<div id='suggestionLoading' style='display:none'><img src='ajax.gif'/></div>
 		<div id='suggestions' style='display:none;' class='resultContainer'>
-			Suggestions to play next in radio:
+			<div class='heading'>What's next?</div>
 			<div id='suggestionResults'>
 			</div>
 		</div>
