@@ -49,6 +49,8 @@
 		div#search {  margin-bottom: 1em; width: 500px;}
 		
 		div#description { font-size: 15px; margin-bottom: 1em; color: #666;}
+		div#about {position:absolute; bottom:0px; right: 10px; width:150px; font-size: 10px; text-align:right; color: #777;}
+		img#logo {position:absolute; top:10px; right:15px;}
 		
 		a.github { background-image: url(https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67); background-position: 0 0; background-repeat: no-repeat; display: block; width: 150px; height: 150px; overflow: hidden; position: absolute; text-indent: -9999px; right: 0; top: 0px; }
 		
@@ -148,7 +150,7 @@
 				anchor = $('<a />', {
 					src: result.images[0], // small
 					text: result.artist + ' - ' + result.name,
-					href: '/'
+					href: '#'
 				}).appendTo(main);
 				
 				$('<img />', {
@@ -229,7 +231,7 @@
 				
 				meta = $('<a />', {
 					class: 'meta',
-					href: '',
+					href: '#',
 					click: function(){
 						$('#suggestions').slideUp(
 							function(){
@@ -347,12 +349,7 @@
 	}
 	
 	// on document ready
-	$(function(){
-		$('#frmSearch').submit(function(){
-			doSearch($('#q').val());
-			return false;
-		});
-		
+	$(function(){		
 		$('#q').keyup(function(){
 			$('#searchLoading').show();
 			if (searchTimeout) clearTimeout(searchTimeout);
@@ -397,16 +394,23 @@
 
 	</script>
 
+		<img src='radyo.png' width='150' height='150' id='logo'/>
+
 	<div id='description'>
-		Radyo plays similar tracks one after another using last.fm and YouTube. Begin by searching a well-known song
+		Radyo plays similar tracks one after another. Start by searching a well-known song
 		and enjoy!
 	</div>
 	
+	<div id='about'>
+		<a target='_blank' href='http://ahmetalpbalkan.com/'><u>alp</u></a> made
+		this. source-code is <a target='_blank' href='http://github.com/ahmetalpalkan/radyo'>available</a>
+		on Github.
+	</div>	
+	<!--<a class='github' target='_blank' href='http://github.com/ahmetalpbalkan/radyo'>Fork me on GitHub</a>-->
+
 	<div id='search'>
-		<form id='frmSearch'>
-			<input type='text' name='q' id='q' value='Type an artist or song name'/>
-			<img id='searchLoading' style='display:none' src='ajax.gif'/>
-		</form>
+		<input type='text' name='q' id='q' value='Type an artist or song name'/>
+		<img id='searchLoading' style='display:none' src='ajax.gif'/>
 		
 		<div id='searchResults' display='none' class='resultContainer'>
 		</div>
@@ -433,6 +437,5 @@
 			</div>
 		</div>
 	</div>
-	<a class='github' target='_blank' href='http://github.com/ahmetalpbalkan/radyo'>Fork me on GitHub</a>
 </body>
 </html>
