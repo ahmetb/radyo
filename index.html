@@ -288,13 +288,14 @@
 		
 	function startPlayingFromYoutube(artist, title){		
 		preStartPlayingHook();
-		
+
 		playedSoFar.push(title);
-		
+
 		var q = encodeURIComponent(artist + ' '+ title);
 		var url = 'https://gdata.youtube.com/feeds/api/videos?max-results=1&q='+q+'&callback=youtubeCallback';
+
 		$.get(url); // handled by youtubeCallback
-		
+
 		// show info and now playing info.
 		$('#nowPlaying').html(artist+' - '+title);
 		$('#info').show();
@@ -413,10 +414,9 @@
 	
 	<div id='about'>
 		<a target='_blank' href='http://ahmetalpbalkan.com/'><u>alp</u></a> made
-		this and source code is <a target='_blank' href='http://github.com/ahmetalpalkan/radyo'>available</a>
-		on Github.
+		this and source code is <a target='_blank' href='http://github.com/ahmetalpalkan/radyo'>available</a>.
 	</div>	
-	<!--<a class='github' target='_blank' href='http://github.com/ahmetalpbalkan/radyo'>Fork me on GitHub</a>-->
+	<a class='github' target='_blank' href='http://github.com/ahmetalpbalkan/radyo'>Fork me on GitHub</a>
 
 	<div id='search'>
 		<input type='text' name='q' id='q' value='Type an artist or song name'/>
@@ -438,7 +438,6 @@
 		</p>
 		
 		<img src='' style='float:right;' id='albumCover'/>
-		
 		
 		<div id='suggestionLoading' style='display:none'><img src='ajax.gif'/></div>
 		<div id='suggestions' style='display:none;' class='resultContainer'>
