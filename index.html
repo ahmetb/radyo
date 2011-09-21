@@ -67,25 +67,6 @@
 	
 	var searchTimeout;
 	
-	var curDuration, curElapsed;
-	//var timer;
-	
-	function timerFunction(){
-		if(curElapsed <= curDuration) $('#time').html(strSecs(curElapsed) + '/' + strSecs(curDuration));
-		if (curElapsed > curDuration + videoLoadingDelayTolerance){
-			if (timer) {
-				clearInterval(timer);
-			}
-			playNext();
-		} else {
-			curElapsed += 1;
-		}
-	}
-	
-	function strSecs(secs){
-		return Math.floor(secs/60)+':'+secs%60;
-	}
-	
 	function playNext(){
 		if (suggestionResults){
 			nextTrack = suggestionResults.shift();
@@ -314,16 +295,8 @@
 		
 		id = id.substring(id.indexOf('videos/')+'videos/'.length);
 		
-		curDuration = parseInt($(video).find('duration').attr('seconds'));
-		curElapsed = 0;
+		//curDuration = parseInt($(video).find('duration').attr('seconds'));
 		
-		// cancel previous timer, start new.
-		//if (timer) clearInterval(timer);
-		
-		/*setTimeout(function(){
-			timer = setInterval(timerFunction, 1000); // run every second			
-		}, 2*1000);*/
-	
 		launchPlayer(id);
 	}
 
