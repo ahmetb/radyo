@@ -2,7 +2,7 @@
 <head>
 	<title>radyo</title>
 	<meta charset="utf-8">
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js" type="text/javascript"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js" type="text/javascript"></script>
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/swfobject/2/swfobject.js"></script>
 	
 	<style>
@@ -278,6 +278,7 @@
 		$.get(url); // handled by youtubeCallback
 
 		// show info and now playing info.
+		document.title = "radyo | " + title + " - " + artist;
 		$('#nowPlaying').html(artist+' - '+title);
 		$('#info').show();
 		
